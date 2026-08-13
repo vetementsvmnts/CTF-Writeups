@@ -76,7 +76,7 @@ nmap -sC -sV -p- -T4 <TARGET_IP>
 ```
 
 <p align="center">
-  <img src="./Assets/01-nmap-scan-results.png.png" alt="Nmap scan results" width="700">
+  <img src="./Assets/01-nmap-scan-results.png" alt="Nmap scan results" width="700">
 </p>
 
 **Key findings:**
