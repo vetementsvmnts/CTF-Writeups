@@ -34,7 +34,7 @@
 | **Author** | Kitsana Thuekoh ([@vetementsvmnts](https://github.com/vetementsvmnts)) |
 
 <p align="center">
-  <img src="./Assets/08-tryhackme-completion.png.png" alt="Room completion confirmation - 100%" width="700">
+  <img src="./Assets/08-tryhackme-completion.png" alt="Room completion confirmation - 100%" width="700">
 </p>
 
 ---
