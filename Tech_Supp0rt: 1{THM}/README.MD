@@ -34,10 +34,6 @@
 | **Objective** | Enumerate SMB shares → recover and decode staged data → authenticate to the Subrion CMS admin panel → exploit CVE-2018-19422 for code execution → catch a reverse shell → extract further credentials from the host → escalate access |
 | **Author** | Kitsana Thuekoh ([@vetementsvmnts](https://github.com/vetementsvmnts)) |
 
-<p align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/assets/01-Tech_Supp0rt%201.png" alt="Tech Support Overview" width="700">
-</p>
-
 ---
 
 ## `0x01` Attack Chain
@@ -77,13 +73,6 @@ nmap -sC -sV <TARGET_IP>
 nmap -p- -T4 <TARGET_IP>
 ```
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/02-Nmap%20Scan%20Results.png" alt="Initial Nmap scan results" width="700">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/03-Nmap-Scan-Result.png" alt="Full port-range Nmap scan results" width="700">
-</p>
-
 **Key findings:** SMB exposed alongside a web service consistent with the scenario's "under development" scammer site.
 
 ---
@@ -97,29 +86,17 @@ smbclient -L //<TARGET_IP>/ -N
 smbclient //<TARGET_IP>/<SHARE_NAME> -N
 ```
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/04-SMB-Enumeration-%26-File-Download.png" alt="SMB enumeration and file download" width="700">
-</p>
-
 ---
 
 ## `0x04` enter.txt — Contents & Exploit Retrieval
 
 A file named `enter.txt` retrieved from the share contained data pointing toward the vulnerable component on the host. This lead was used to identify the target CMS and pull down a working exploit for **CVE-2018-19422** (Subrion CMS 4.2.1 authenticated file upload bypass).
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/05-Enter.txt%20Contents-%26-Exploit-Retrieval.png" alt="enter.txt contents and exploit retrieval" width="700">
-</p>
-
 ---
 
 ## `0x05` Credential Recovery — CyberChef Decoding
 
 Data recovered from the share was not stored in plaintext. It was run through **CyberChef** to identify and reverse the encoding, recovering credentials usable against the Subrion CMS admin panel.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/10-CyberChef%20Decoding.png" alt="CyberChef decoding of recovered SMB data" width="700">
-</p>
 
 > **Takeaway:** Encoding is not encryption. Files staged on a share "for later" are a recurring source of credential leakage — in CTFs and in real engagements alike.
 
@@ -128,13 +105,6 @@ Data recovered from the share was not stored in plaintext. It was run through **
 ## `0x06` Initial Access — Subrion CMS (CVE-2018-19422)
 
 The recovered credentials granted access to the **Subrion CMS admin panel**. Subrion 4.2.1's `/panel/uploads` endpoint fails to block `.pht`/`.phar` uploads at the `.htaccess` level, allowing an authenticated user to upload and execute arbitrary PHP.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/11-Subrion%20CMS%20Admin%20Uploads%20Dashboard.png" alt="Subrion CMS admin uploads dashboard" width="700">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/06-Subrion-CMS-Exploit-Execution%20%28CVE-2018-19422%29.png" alt="CVE-2018-19422 exploit execution" width="700">
-</p>
 
 ```bash
 python3 CVE-2018-19422.py -u http://<TARGET_IP>/panel/ -l <user> -p <password>
@@ -150,10 +120,6 @@ Code execution via the uploaded payload was used to catch a reverse shell with `
 # Listener
 nc -lvnp <PORT>
 ```
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/07-Netcat-Reverse-Shell-Listener-%26-WordPress%20Configuration-Extraction.png" alt="Netcat reverse shell and WordPress configuration extraction" width="700">
-</p>
 
 Shell stabilization:
 
@@ -174,10 +140,6 @@ The extracted WordPress configuration file was read directly to recover database
 cat wp-config.php
 ```
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/08-WordPress%20Configuration%20File%20Output.png" alt="WordPress configuration file output" width="700">
-</p>
-
 ---
 
 ## `0x09` Privilege Escalation Path — Passwd Enumeration & SSH
@@ -189,19 +151,11 @@ cat /etc/passwd
 ssh <user>@<TARGET_IP>
 ```
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/09-Passwd%20Enumeration%20and%20SSH%20Connection%20Attempt.png" alt="Passwd enumeration and SSH connection attempt" width="700">
-</p>
-
 ---
 
 ## `0x0A` Root Flag
 
 With SSH access established using the recovered credentials, final privilege escalation was completed and the root flag was captured, closing out the room.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/12-Root-Flag.png" alt="Root flag captured" width="700">
-</p>
 
 ---
 
