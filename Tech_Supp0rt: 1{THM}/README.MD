@@ -35,7 +35,7 @@
 | **Author** | Kitsana Thuekoh ([@vetementsvmnts](https://github.com/vetementsvmnts)) |
 
 <p align="center">
-<img src="assets/01-Tech_Supp0rt%201.png" alt="Tech Support Overview" width="700">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Tech_Supp0rt%3A%201%7BTHM%7D/assets/01-Tech_Supp0rt%201.png" alt="Tech Support Overview" width="700">
 </p>
 
 ---
