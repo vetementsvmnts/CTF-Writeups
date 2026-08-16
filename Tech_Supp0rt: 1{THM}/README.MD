@@ -35,7 +35,7 @@
 | **Author** | Kitsana Thuekoh ([@vetementsvmnts](https://github.com/vetementsvmnts)) |
 
 <p align="center">
-  <img src="./Assets/01-Tech_Supp0rt%201.png" alt="Tech_Supp0rt: 1 room overview" width="700">
+  <img src="./Images/01-Tech_Supp0rt%201.png" alt="Tech_Supp0rt: 1 room overview" width="700">
 </p>
 
 ---
@@ -78,10 +78,10 @@ nmap -p- -T4 <TARGET_IP>
 ```
 
 <p align="center">
-  <img src="./Assets/02-Nmap%20Scan%20Results.png" alt="Initial Nmap scan results" width="700">
+  <img src="./Images/02-Nmap%20Scan%20Results.png" alt="Initial Nmap scan results" width="700">
 </p>
 <p align="center">
-  <img src="./Assets/03-Nmap-Scan-Result.png" alt="Full port-range Nmap scan results" width="700">
+  <img src="./Images/03-Nmap-Scan-Result.png" alt="Full port-range Nmap scan results" width="700">
 </p>
 
 **Key findings:** SMB exposed alongside a web service consistent with the scenario's "under development" scammer site.
@@ -98,7 +98,7 @@ smbclient //<TARGET_IP>/<SHARE_NAME> -N
 ```
 
 <p align="center">
-  <img src="./Assets/04-SMB-Enumeration-%26-File-Download.png" alt="SMB enumeration and file download" width="700">
+  <img src="./Images/04-SMB-Enumeration-%26-File-Download.png" alt="SMB enumeration and file download" width="700">
 </p>
 
 ---
@@ -108,7 +108,7 @@ smbclient //<TARGET_IP>/<SHARE_NAME> -N
 A file named `enter.txt` retrieved from the share contained data pointing toward the vulnerable component on the host. This lead was used to identify the target CMS and pull down a working exploit for **CVE-2018-19422** (Subrion CMS 4.2.1 authenticated file upload bypass).
 
 <p align="center">
-  <img src="./Assets/05-Enter.txt%20Contents-%26-Exploit-Retrieval.png" alt="enter.txt contents and exploit retrieval" width="700">
+  <img src="./Images/05-Enter.txt%20Contents-%26-Exploit-Retrieval.png" alt="enter.txt contents and exploit retrieval" width="700">
 </p>
 
 ---
@@ -118,7 +118,7 @@ A file named `enter.txt` retrieved from the share contained data pointing toward
 Data recovered from the share was not stored in plaintext. It was run through **CyberChef** to identify and reverse the encoding, recovering credentials usable against the Subrion CMS admin panel.
 
 <p align="center">
-  <img src="./Assets/10-CyberChef%20Decoding.png" alt="CyberChef decoding of recovered SMB data" width="700">
+  <img src="./Images/10-CyberChef%20Decoding.png" alt="CyberChef decoding of recovered SMB data" width="700">
 </p>
 
 > **Takeaway:** Encoding is not encryption. Files staged on a share "for later" are a recurring source of credential leakage — in CTFs and in real engagements alike.
@@ -130,10 +130,10 @@ Data recovered from the share was not stored in plaintext. It was run through **
 The recovered credentials granted access to the **Subrion CMS admin panel**. Subrion 4.2.1's `/panel/uploads` endpoint fails to block `.pht`/`.phar` uploads at the `.htaccess` level, allowing an authenticated user to upload and execute arbitrary PHP.
 
 <p align="center">
-  <img src="./Assets/11-Subrion%20CMS%20Admin%20Uploads%20Dashboard.png" alt="Subrion CMS admin uploads dashboard" width="700">
+  <img src="./Images/11-Subrion%20CMS%20Admin%20Uploads%20Dashboard.png" alt="Subrion CMS admin uploads dashboard" width="700">
 </p>
 <p align="center">
-  <img src="./Assets/06-Subrion-CMS-Exploit-Execution%20(CVE-2018-19422).png" alt="CVE-2018-19422 exploit execution" width="700">
+  <img src="./Images/06-Subrion-CMS-Exploit-Execution%20(CVE-2018-19422).png" alt="CVE-2018-19422 exploit execution" width="700">
 </p>
 
 ```bash
@@ -152,7 +152,7 @@ nc -lvnp <PORT>
 ```
 
 <p align="center">
-  <img src="./Assets/07-Netcat-Reverse-Shell-Listener-%26-WordPress%20Configuration-Extraction.png" alt="Netcat reverse shell and WordPress configuration extraction" width="700">
+  <img src="./Images/07-Netcat-Reverse-Shell-Listener-%26-WordPress%20Configuration-Extraction.png" alt="Netcat reverse shell and WordPress configuration extraction" width="700">
 </p>
 
 Shell stabilization:
@@ -175,7 +175,7 @@ cat wp-config.php
 ```
 
 <p align="center">
-  <img src="./Assets/08-WordPress%20Configuration%20File%20Output.png" alt="WordPress configuration file output" width="700">
+  <img src="./Images/08-WordPress%20Configuration%20File%20Output.png" alt="WordPress configuration file output" width="700">
 </p>
 
 ---
@@ -190,12 +190,22 @@ ssh <user>@<TARGET_IP>
 ```
 
 <p align="center">
-  <img src="./Assets/09-Passwd%20Enumeration%20and%20SSH%20Connection%20Attempt.png" alt="Passwd enumeration and SSH connection attempt" width="700">
+  <img src="./Images/09-Passwd%20Enumeration%20and%20SSH%20Connection%20Attempt.png" alt="Passwd enumeration and SSH connection attempt" width="700">
 </p>
 
 ---
 
-## `0x0A` MITRE ATT&CK Mapping
+## `0x0A` Root Flag
+
+With SSH access established using the recovered credentials, final privilege escalation was completed and the root flag was captured, closing out the room.
+
+<p align="center">
+  <img src="./Images/12-Root-Flag.png" alt="Root flag captured" width="700">
+</p>
+
+---
+
+## `0x0B` MITRE ATT&CK Mapping
 
 | Tactic | Technique | ID |
 |---|---|---|
@@ -212,7 +222,7 @@ ssh <user>@<TARGET_IP>
 
 ---
 
-## `0x0B` Lessons Learned
+## `0x0C` Lessons Learned
 
 - **Share hygiene matters.** Anonymous SMB access to files staged "for later" (like `enter.txt`) is a low-effort, high-yield attack path.
 - **Encoding ≠ security.** Base64-style encodings staged on a share do nothing against an attacker with local file read access.
@@ -222,6 +232,8 @@ ssh <user>@<TARGET_IP>
 ---
 
 <div align="center">
+
+`root@target:~#` **Room completed — 100%**
 
 *Writeup by [Kitsana Thuekoh](https://github.com/vetementsvmnts) · Offensive Security Portfolio*
 
