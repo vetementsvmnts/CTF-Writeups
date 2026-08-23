@@ -18,8 +18,6 @@
 [![Category](https://img.shields.io/badge/Category-Sandbox%20Escape%20%7C%20Crypto%20%7C%20SUID%20PrivEsc-00FF41?style=for-the-badge)](#)
 [![Flags](https://img.shields.io/badge/Flags-3%2F3%20Captured-ff2020?style=for-the-badge)](#)
 
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/01-Nmap-Discovery.png" alt="Python Playground Room Banner" width="800"/>
-
 </div>
 
 ---
@@ -90,10 +88,6 @@ An initial `nmap` scan against the target identified two open services:
 nmap -sC -sV -p- -T4 <TARGET_IP>
 ```
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/01-Nmap-Discovery.png" alt="Nmap Discovery" width="800"/>
-</p>
-
 ---
 
 ## `0x03` Web Enumeration — Gobuster
@@ -106,10 +100,6 @@ gobuster dir -u http://<TARGET_IP> -w /usr/share/dirb/wordlists/common.txt -x ht
 
 The scan surfaced `admin.html` — a hidden login form titled *"Connor's Secret Admin Backdoor"* not referenced anywhere on the public site.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/02-Gobuster-Enumeration.png" alt="Gobuster Enumeration" width="800"/>
-</p>
-
 ---
 
 ## `0x04` Admin Portal Source Review
@@ -118,14 +108,6 @@ With direct login credentials unknown, the page source of `admin.html` was revie
 
 Because the validation runs only in the browser, the redirect target (`super-secret-admin-testing-panel.html`) was reachable directly, without ever solving the hash at this stage.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/05-Admin%20Portal%20Source.png" alt="Admin Portal Source 1" width="800"/>
-  <br/>
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/06-Admin%20Portal%20Source.png" alt="Admin Portal Source 2" width="800"/>
-  <br/>
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/07-Admin%20Portal%20Source.png" alt="Admin Portal Source 3" width="800"/>
-</p>
-
 > **Takeaway:** A security control that only exists in client-side JavaScript is not a security control — it's a suggestion the browser is free to ignore.
 
 ---
@@ -133,12 +115,6 @@ Because the validation runs only in the browser, the redirect target (`super-sec
 ## `0x05` PyExec Sandbox — Discovery & Blacklist / Threat Detection
 
 Navigating directly to `super-secret-admin-testing-panel.html` exposed the advertised **Python execution console**, letting arbitrary Python run server-side. The room's own description bragged about a "foolproof blacklist" — and the first naive payload confirmed it: attempting a plain `import os` tripped the filter and returned a blocked / threat-detected response.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/03-PyExec%20Sandbox.png" alt="PyExec Sandbox" width="800"/>
-  <br/>
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/04-Threat%20detection.png" alt="Threat Detection Triggered" width="800"/>
-</p>
 
 ---
 
@@ -165,10 +141,6 @@ nc -lvnp 7345
 
 The resulting shell landed as **root inside the sandbox's Docker container**, where `/root/flag1.txt` was sitting alongside the sandboxed app directory.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/07-flag1.png" alt="Flag 1 Captured" width="800"/>
-</p>
-
 ---
 
 ## `0x07` Hash Reversal — Connor's Password & Flag 2
@@ -181,10 +153,6 @@ python3 crack_connor_hash.py
 ```
 
 With valid credentials in hand, SSH access was established directly on the host (separate from the sandbox's container), where `flag2.txt` was waiting in Connor's home directory.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/08-flag2.png" alt="Flag 2 Captured" width="800"/>
-</p>
 
 ---
 
@@ -205,19 +173,11 @@ chmod +s /mnt/log/sh
 
 The SUID binary executed with root privileges on the host, completing the escalation and revealing `flag3.txt` in `/root`.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/09-SUID%20Escalation%20Lab.png" alt="SUID Escalation" width="800"/>
-  <br/>
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/10-flag3.png" alt="Flag 3 Captured" width="800"/>
-</p>
-
 ---
 
 ## `0x09` Room Completion
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Playground%7BTHM%7D/Assets/11-Room-Completion.png" alt="Room Completion" width="800"/>
-</p>
+Room completed with all flags captured.
 
 ---
 
