@@ -127,7 +127,7 @@ nc <TARGET_IP> 5038
 ```
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/06-SIP%20Extension%20Enumeration%20SIP%20Enum%20Scan.png" alt="SIP extension enumeration" width="800">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/06-SIP%20Extension%20Enumeration%20%20SIP%20Enum%20Scan.png" alt="SIP extension enumeration" width="800">
 </div>
 
 With a valid username already in hand from the `.pyc`, the only missing piece was the password.
