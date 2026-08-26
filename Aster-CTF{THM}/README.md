@@ -81,6 +81,11 @@ A full-port `nmap` scan (the default top-1000 misses several of the VoIP-related
 nmap -sC -sV -p- -T4 <TARGET_IP>
 ```
 
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/02-Nmap-Discovery.png" alt="Nmap discovery scan" width="800"><br>
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/03-Nmap%20Discovery.png" alt="Nmap discovery scan continued" width="800">
+</div>
+
 - **Port 22/tcp** — `OpenSSH`
 - **Port 80/tcp** — Apache httpd, hosting a page titled "Aster CTF"
 - **Port 1720/tcp** — H.323 call signaling (`h323q931`)
@@ -101,6 +106,11 @@ uncompyle6 <downloaded_file>.pyc
 # or: decompyle3 / pycdc, depending on the Python version the .pyc targets
 ```
 
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/04-Web%20Enumeration.png" alt="Web enumeration" width="800"><br>
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/05-Pyfiglet%20Decoder.png" alt="Pyfiglet decoder output" width="800">
+</div>
+
 The decompiled source leaked a valid **AMI username**, pointing directly at the service found on port 5038.
 
 > **Notes to fill in:** the actual filename, which decompiler worked for the bytecode version, and the recovered username.
@@ -115,6 +125,10 @@ The Asterisk Manager Interface (AMI) is a text-based, line-oriented protocol use
 nc <TARGET_IP> 5038
 # Asterisk Call Manager/5.0.2
 ```
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/06-SIP%20Extension%20Enumeration%20SIP%20Enum%20Scan.png" alt="SIP extension enumeration" width="800">
+</div>
 
 With a valid username already in hand from the `.pyc`, the only missing piece was the password.
 
@@ -139,6 +153,10 @@ set USERNAME <recovered_username>
 set PASS_FILE /usr/share/wordlists/rockyou.txt
 run
 ```
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/07-Asterisk%20AMI%20Brute-Force.png" alt="Asterisk AMI brute force" width="800">
+</div>
 
 > **Notes to fill in:** which method you actually used, and the recovered password (redact if you'd rather not publish it).
 
@@ -167,6 +185,10 @@ Command: <shell_command>
 
 ```
 
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/08-AMI%20Raw%20Command%20Execution.png" alt="AMI raw command execution" width="800">
+</div>
+
 > **Notes to fill in:** the exact AMI action/payload that got you code execution, and how you turned that into an interactive shell (reverse shell one-liner, `Originate` + `System()` dialplan trick, etc.).
 
 ---
@@ -178,6 +200,10 @@ Command execution through AMI was used to establish an interactive shell back to
 ```bash
 nc -lvnp <PORT>
 ```
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/09-Flag1.png" alt="User flag captured" width="800">
+</div>
 
 > **Notes to fill in:** the home directory / path where the user flag was found, and the username you landed as.
 
@@ -192,11 +218,19 @@ sudo -l
 find / -perm -4000 -type f 2>/dev/null
 ```
 
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/10-flag2.png" alt="Root flag captured" width="800">
+</div>
+
 > **Notes to fill in:** the actual privesc vector for this box (this varies across THM room revisions — fill in what you found: a `sudo` misconfiguration, a vulnerable SUID binary, a cron job, etc.), the commands used to exploit it, and where the root flag was located.
 
 ---
 
 ## `0x09` Room Completion
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Aster-CTF%7BTHM%7D/Assets/01-Room%20Completion.png" alt="Room completion" width="800">
+</div>
 
 Room completed with both flags captured.
 
