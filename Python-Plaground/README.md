@@ -88,10 +88,6 @@ An initial `nmap` scan against the target identified two open services:
 nmap -sC -sV -p- -T4 <TARGET_IP>
 ```
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/01-Nmap-Discovery.png" alt="Nmap scan discovering SSH and HTTP services" width="800">
-</div>
-
 ---
 
 ## `0x03` Web Enumeration — Gobuster
@@ -104,10 +100,6 @@ gobuster dir -u http://<TARGET_IP> -w /usr/share/dirb/wordlists/common.txt -x ht
 
 The scan surfaced `admin.html` — a hidden login form titled *"Connor's Secret Admin Backdoor"* not referenced anywhere on the public site.
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/02-Gobuster-Enumeration.png" alt="Gobuster enumeration uncovering admin.html" width="800">
-</div>
-
 ---
 
 ## `0x04` Admin Portal Source Review
@@ -118,25 +110,11 @@ Because the validation runs only in the browser, the redirect target (`super-sec
 
 > **Takeaway:** A security control that only exists in client-side JavaScript is not a security control — it's a suggestion the browser is free to ignore.
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/05-Admin%20Portal%20Source.png" alt="Admin portal source review - part 1" width="800">
-<br><br>
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/06-Admin%20Portal%20Source.png" alt="Admin portal source review - part 2" width="800">
-<br><br>
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/07-Admin%20Portal%20Source.png" alt="Admin portal source review - part 3" width="800">
-</div>
-
 ---
 
 ## `0x05` PyExec Sandbox — Discovery & Blacklist / Threat Detection
 
 Navigating directly to `super-secret-admin-testing-panel.html` exposed the advertised **Python execution console**, letting arbitrary Python run server-side. The room's own description bragged about a "foolproof blacklist" — and the first naive payload confirmed it: attempting a plain `import os` tripped the filter and returned a blocked / threat-detected response.
-
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/03-PyExec%20Sandbox.png" alt="PyExec sandbox console" width="800">
-<br><br>
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/04-Threat%20detection.png" alt="Blacklist blocking a plain import statement" width="800">
-</div>
 
 ---
 
@@ -163,10 +141,6 @@ nc -lvnp 7345
 
 The resulting shell landed as **root inside the sandbox's Docker container**, where `/root/flag1.txt` was sitting alongside the sandboxed app directory.
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/07-flag1.png" alt="Flag 1 captured via blacklist bypass" width="800">
-</div>
-
 ---
 
 ## `0x07` Hash Reversal — Connor's Password & Flag 2
@@ -179,10 +153,6 @@ python3 crack_connor_hash.py
 ```
 
 With valid credentials in hand, SSH access was established directly on the host (separate from the sandbox's container), where `flag2.txt` was waiting in Connor's home directory.
-
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/08-flag2.png" alt="Flag 2 captured via SSH after hash reversal" width="800">
-</div>
 
 ---
 
@@ -203,21 +173,11 @@ chmod +s /mnt/log/sh
 
 The SUID binary executed with root privileges on the host, completing the escalation and revealing `flag3.txt` in `/root`.
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/09-SUID%20Escalation%20Lab.png" alt="SUID escalation via shared bind-mount" width="800">
-<br><br>
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/10-flag3.png" alt="Flag 3 captured as root on the host" width="800">
-</div>
-
 ---
 
 ## `0x09` Room Completion
 
 Room completed with all flags captured.
-
-<div align="center">
-<img src="https://raw.githubusercontent.com/vetementsvmnts/CTF-Writeups/main/Python-Plaground/11-Room-Completion.png" alt="Room completion screen - 3/3 flags" width="800">
-</div>
 
 ---
 
