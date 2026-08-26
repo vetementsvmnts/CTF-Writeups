@@ -86,7 +86,7 @@ nmap -sC -sV -p- -T4 <TARGET_IP>
 </p>
 
 <p align="center">
-  <img src="Assets/03-Nmap%20Discovery.png" alt="Nmap discovery scan continued" width="800">
+   <img src="Assets/03-Nmap%20Discovery.png" alt="Nmap discovery scan 2" width="800">
 </p>
 
 - **Port 22/tcp** — `OpenSSH`
